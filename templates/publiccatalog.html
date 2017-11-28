@@ -1,0 +1,43 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "navbar.html" %}
+<main class="col pt-3">
+    <div class="row">
+        <div class="col">
+            <div class = 'flash'>
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                <ul>
+                    {% for message in messages %}
+                    <strong>{{ message }}</strong>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-3">
+            <h1>Category</h1>
+        </div>
+        <div class="col-8">
+            <h1>Latest Items</h1>
+        </div>
+    </div>
+    <section class="row">
+        {% include "sidebar.html" %}
+        <div class="col-8">
+            {% for category in categories %}
+            {% for item in items %}
+            {% if item.category_id == category.id %}
+            <h3><a href = "{{url_for('showCategoryItem', category=category.name, item=item.name )}}">
+                {{item.name}}
+            </a></h3>
+            {% endif %}
+            {% endfor %}
+            {% endfor %}
+        </div>
+    </section>
+</main>
+{% endblock %}

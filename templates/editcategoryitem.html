@@ -1,0 +1,42 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "navbar.html" %}
+<div class="row pt-3">
+	<div class="col">
+		<h1>Edit Category Item</h1>
+	</div>
+</div>
+<div class="row">
+	<div class="col">
+		<form action="{{ url_for('editCategoryItem', category=category, item=item) }}" method = "POST">
+			<div class="form-group">
+				<label for="name">Name:</label>
+				<input type ="text" id="name" maxlength="50" class="form-control" name="name" value="{{ editedItem.name }}" placeholder="Name of the Item">
+			</div>
+			<div class="form-group">
+				<label for="description">Description:</label>
+				<textarea class="form-control" id="description" maxlength="250" rows="3" name="description" placeholder="{{ editedItem.description }}" style="resize:none;"></textarea>
+			</div>
+			<div class="form-group">
+				<label for="category">Category:</label>
+				<select class="form-control" id="category" name="category">
+					<option>Select a Category</option>
+					{% for category in categories %}
+					{% if category.name in request.path%}
+					<option selected>{{category.name}}</option>
+                    {% else %}
+                    <option>{{category.name}}</option>
+                    {% endif %}
+					{% endfor %}
+				</select>
+			</div>
+			<div class="form-group">
+				<button type="submit" class="btn btn-primary">Edit</button>
+                <a href="{{ url_for('showCategoryItem', category=category, item=item) }}" class="btn btn-secondary">
+                    <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>Cancel</a>
+
+            </div>
+		</form>
+	</div>
+</div>
+{% endblock %}

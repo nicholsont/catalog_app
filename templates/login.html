@@ -1,0 +1,96 @@
+{% extends "main.html" %}
+{% block content %}
+<div class="row py-5" id="signin">
+    <div class="offset-3 col-6 offset-3 py-5 bg-faded">
+        <div class="offset-3 col-6 offset-3">
+            <h1 class="display-3">Sign in!</h1>
+        </div>
+        <div class="offset-3 col-6 offset-3 text-center">
+            <div id="signinButton">
+            <span class="g-signin" data-scope="https://www.googleapis.com/auth/userinfo.profile email" data-clientid="590498119179-sec2ib09pieju15jjk15k6jmncjoi4u0.apps.googleusercontent.com" data-redirecturl="postmessage"
+                  data-accesstype="offline" data-cookiepolicy="single_host_origin" data-callback="signInCallback"
+                  data-approvalprompt="force">
+            </span>
+            </div>
+        </div>
+        <div class="offset-3 col-6 offset-3 text-center">
+            <fb:login-button scope="public_profile,email" onlogin="sendTokenToServer();">Login with Facebook
+            </fb:login-button>
+        </div>
+    </div>
+</div>
+<div id="result"></div>
+<script src="https://apis.google.com/js/client:platform.js?onload=start" async defer></script>
+<script>
+      function signInCallback(authResult) {
+        if (authResult['code']) {
+          $('#signin').attr('style', 'display: none');
+          //Send one-time-use code to web server
+          $.ajax({
+            type: 'POST',
+            url: '/oauth/google',
+            processData: false,
+            contentType: 'application/octet-stream; charset=utf-8',
+            data: authResult['code'],
+            success: function(result) {
+              if (result) {
+                $('#result').html('Login Successful!</br>' + result + '</br>Redirecting')
+                setTimeout(function() {
+                    window.location.href ='/catalog';
+                }, 4000)
+              } else if (authResult['error']) {
+                  console.log('There was an error: ' + authResult['error'])
+              } else {
+                  $('#result').html('Failed to make a server side call. Check your configuration.')
+              }
+            }
+          })
+        }
+      }
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId      : '706761222849237',
+          cookie     : true,
+          xfbml      : true,
+          version    : 'v2.11'
+        });
+        FB.AppEvents.logPageView();
+      };
+      (function(d, s, id){
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement(s); js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+      function sendTokenToServer() {
+        $('#signin').attr('style', 'display: none');
+        var access_token = FB.getAuthResponse()['accessToken'];
+        console.log(access_token)
+        console.log('Welcome!  Fetching your information.... ');
+        FB.api('/me', function(response) {
+          console.log('Successful login for: ' + response.name);
+          $.ajax({
+            type: 'POST',
+            url: '/oauth/facebook',
+            processData: false,
+            contentType: 'application/octet-stream; charset=utf-8',
+            data: access_token,
+            success: function(result) {
+              if (result) {
+                $('#result').html('Login Successful!</br>'+ result + '</br>Redirecting...')
+               setTimeout(function() {
+                window.location.href = "/catalog";
+               }, 4000);
+            } else {
+              $('#result').html('Failed to make a server-side call. Check your configuration and console.');
+               }
+            },
+            error: function (error) {
+              console.log(error)
+            }
+          });
+        });
+      }
+</script>
+{% endblock %}

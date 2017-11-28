@@ -1,0 +1,21 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "navbar.html" %}
+<div class="row pt-3">
+    <div class="col-3">
+        <h1>Category</h1>
+    </div>
+</div>
+<div class="row">
+    {% include "sidebar.html" %}
+    <div class="col-8">
+        <div class="card">
+            <div class="card-block">
+                <h4 class="card-title">{{item.name}}</h4>
+                <h6 class="card-subtitle mb-2 text-muted">{{category.name}}</h6>
+                <p class="card-text">{{item.description}}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

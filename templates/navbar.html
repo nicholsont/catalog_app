@@ -1,0 +1,12 @@
+<nav class="nav navbar-nav navbar-toggleable-sm navbar-light bg-faded">
+    <a class="navbar-brand" href="{{ url_for('showCatalog') }}"><h3><i class="fa fa-lg fa-home"></i>Catalog</h3></a>
+    <ul class="nav nav-pills ml-auto">
+        <li class="nav-item">
+            {% if 'token' not in session %}
+            <a href="{{ url_for('showLogin') }}" class="btn btn-primary">Please Login</a>
+            {% else %}
+            <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+            {% endif %}
+        </li>
+    </ul>
+</nav>

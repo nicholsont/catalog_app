@@ -1,0 +1,32 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "navbar.html" %}
+<main class="col pt-3">
+    <div class="row">
+        <div class="col-3">
+            <h1>Category</h1>
+        </div>
+        <div class="col-8">
+            <h1>{{category.name}}</h1>
+        </div>
+    </div>
+    <section class="row">
+        {% include "sidebar.html" %}
+        <div class="col-8">
+            {% if items %}
+            {% for category in categories %}
+            {% for item in items %}
+            {% if item.category_id == category.id %}
+            <h3><a href = "{{url_for('showCategoryItem', category=category.name, item=item.name )}}">
+                {{item.name}}
+            </a></h3>
+            {% endif %}
+            {% endfor %}
+            {% endfor %}
+            {% else %}
+            <h3>No Items have been added.</h3>
+            {% endif %}
+        </div>
+    </section>
+</main>
+{% endblock %}

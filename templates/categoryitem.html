@@ -1,0 +1,35 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "navbar.html" %}
+<main class="col pt-3">
+    <div class="row">
+        <div class="col">
+            <div class = 'flash'>
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                <ul>
+                    {% for message in messages %}
+                    <strong>{{ message }}</strong>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        {% include "sidebar.html" %}
+        <div class="col-8">
+            <div class="card">
+                <div class="card-block">
+                    <h4 class="card-title">{{item.name}}</h4>
+                    <h6 class="card-subtitle mb-2 text-muted">{{category.name}}</h6>
+                    <p class="card-text">{{item.description}}</p>
+                    <a href="{{ url_for('editCategoryItem', category=category.name, item=item.name) }}" class="mr-3">Edit</a>
+                    <a href="{{ url_for('deleteCategoryItem', category=category.name, item=item.name) }}">Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

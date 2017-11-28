@@ -1,0 +1,14 @@
+<div class="navigation col-3">
+    <nav class="nav navbar-light sidebar">
+        <ul class="nav nav-pills flex-column">
+            {% for category in categories %}
+            <li class="nav-item">
+                <a href="{{ url_for('showCatalogCategory', category=category.name) }}" class="dropdown-item">{{category.name}}</a>
+                {% if category.name in request.path %}
+                <span class="sr-only">(current)</span>
+            </li>
+            {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+</div>
