@@ -31,12 +31,17 @@ session = DBSession()
 # Login handler
 @app.route('/login')
 def showLogin():
+    """JSON API to view entire catalog Information."""
     return render_template('login.html')
 
 
 # Third Party Oauth callback
 @app.route('/oauth/<provider>', methods=['POST'])
 def oauthLogin(provider):
+    """
+    Retrieves provider to process oauth login.
+    params:(string) oauth provider
+    """
     if provider == 'google':
         code = request.data
         try:
@@ -80,14 +85,17 @@ def oauthLogin(provider):
 
     elif provider == 'facebook':
         access_token = request.data
-        url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id={}&client_secret={}&fb_exchange_token={}'.format(APP_ID, APP_SECRET, access_token)  # noqa
+        url = 'https://graph.facebook.com/oauth/access_token?grant_type=' \
+        'fb_exchange_token&client_id={}&client_secret={}&' \
+        'fb_exchange_token={}'.format(APP_ID, APP_SECRET, access_token)  # noqa
         h = httplib2.Http()
         result = json.loads(h.request(url, 'GET')[1])
 
         # Strip expire tag from access token
         access_token = result['access_token']
 
-        url = 'https://graph.facebook.com/v2.11/me?access_token={}&fields=name,id,email,picture'.format(access_token)  # noqa
+        url = 'https://graph.facebook.com/v2.11/me?access_token={}&fields=' \
+        'name,id,email,picture'.format(access_token)  # noqa
         h = httplib2.Http()
         result = json.loads(h.request(url, 'GET')[1])
 
@@ -101,21 +109,18 @@ def oauthLogin(provider):
         login_session['picture'] = data['picture']['data']['url']
         login_session['facebook_id'] = data['id']
 
-    user = session.query(User).filter_by(email=login_session['email']).first()
-    if not user:
-        newUser = User(username=login_session['username'],
-                       email=login_session['email'],
-                       picture=login_session['picture'])
-        session.add(newUser)
-        session.commit()
-
-        token = newUser.generate_auth_token(600)
+    # Checks if user exists in DB
+    if getUserID(login_session['email']) is not None:
+        login_session['user_id'] = getUserID(login_session['email'])
     else:
-        token = user.generate_auth_token(600)
+        createUser(login_session)
+        login_session['user_id'] = getUserID(login_session['email'])
 
     # Stores token in session
+    user = session.query(User).filter_by(email=login_session['email']).first()
+    token = user.generate_auth_token(600)
     login_session['token'] = token
-    print login_session['token']
+
     output = ''
     output += '<h1>Welcome, {}!</h1>'.format(login_session['username'])
     output += '<img src="{}" '.format(login_session['picture'])
@@ -125,10 +130,25 @@ def oauthLogin(provider):
     return output
 
 
+def createUser(login_session):
+    newUser = User(username=login_session['username'],
+                   email=login_session['email'],
+                   picture=login_session['picture'])
+    session.add(newUser)
+    session.commit()
+
+
+def getUserID(email):
+    try:
+        user = session.query(User).filter_by(email=email).one()
+        return user.id
+    except:
+        return None
+
+
 # Revoke current user's token and reset login_session
 @app.route('/logout')
 def logout():
-    # Reset user's session data
     if 'provider' in login_session:
         if login_session['provider'] == 'google':
             del login_session['gplus_id']
@@ -146,13 +166,14 @@ def logout():
         return redirect(url_for('showCatalog'))
 
 
-# JSON APIs to view Category Information
+# JSON APIs to view Category Information.
 @app.route('/catalog/JSON')
 def catalogJSON():
     categories = session.query(Category).all()
     items = session.query(Item).order_by(Item.category_id).limit(3)
 
-    return jsonify(Categories=[c.serialize for c in categories], Items=[i.serialize for i in items])  # noqa
+    return jsonify(Categories=[c.serialize for c in categories],
+                   Items=[i.serialize for i in items])
 
 
 @app.route('/catalog/<category>/JSON')
@@ -160,7 +181,8 @@ def catalogCategoryJSON(category):
     itemCategory = session.query(Category).filter_by(name=category).first()
     items = session.query(Item).filter_by(category_id=itemCategory.id).all()
 
-    return jsonify(Categories=[itemCategory.serialize], Items=[i.serialize for i in items])  # noqa
+    return jsonify(Categories=[itemCategory.serialize],
+                   Items=[i.serialize for i in items])
 
 
 @app.route('/catalog/<category>/<item>/JSON')
@@ -169,7 +191,8 @@ def categoryItemJSON(category, item):
     item = session.query(Item).filter_by(name=item,
                                          category_id=itemCategory.id).first()
 
-    return jsonify(Category=[itemCategory.serialize], Item=[item.serialize])
+    return jsonify(Category=[itemCategory.serialize],
+                   Item=[item.serialize])
 
 
 # Show all Categories and the latest items
@@ -193,9 +216,12 @@ def showCatalogCategory(category):
     items = session.query(Item).filter_by(category_id=itemCategory.id).all()
     categories = session.query(Category).all()
     if 'token' not in login_session:
-        return render_template('publiccategory.html', items=items, category=itemCategory, categories=categories)  # noqa
+        return render_template('publiccategory.html',
+                               items=items, category=itemCategory,
+                               categories=categories)
     else:
-        return render_template('category.html', items=items, category=itemCategory, categories=categories)  # noqa
+        return render_template('category.html', items=items,
+                               category=itemCategory, categories=categories)
 
 
 # Show an item in a category
@@ -206,9 +232,11 @@ def showCategoryItem(category, item):
                                          category_id=category.id).first()
     categories = session.query(Category).all()
     if 'token' not in login_session:
-        return render_template('publiccategoryitem.html', item=item, category=category, categories=categories)  # noqa
-    else:
-        return render_template('categoryitem.html', item=item, category=category, categories=categories)  # noqa
+        return render_template('publiccategoryitem.html',
+                               item=item, category=category,
+                               categories=categories)
+    return render_template('categoryitem.html', item=item,
+                           category=category, categories=categories)
 
 
 # Create a new item
@@ -217,12 +245,16 @@ def newCategoryItem():
     if 'token' not in login_session:
         return redirect('/login')
     categories = session.query(Category).all()
+    user = session.query(User).filter_by(email=login_session['email']).one()
     if request.method == 'POST':
-        category = session.query(Category).filter_by(name=request.form['category']).first()  # noqa
-        newItem = Item(name=request.form['name'], description=request.form['description'], category_id=category.id)  # noqa
+        category = session.query(Category).filter_by(
+            name=request.form['category']).first()
+        newItem = Item(name=request.form['name'],
+                       description=request.form['description'],
+                       category_id=category.id, user_id=user.id)
         session.add(newItem)
         session.commit()
-        flash('New Menu {} Item Successfully Created'.format(newItem.name))
+        flash('New Item {} Successfully Added'.format(newItem.name))
         return redirect(url_for('showCatalog'))
     else:
         return render_template('newcategoryitem.html', categories=categories)
@@ -233,23 +265,35 @@ def newCategoryItem():
 def editCategoryItem(category, item):
     if 'token' not in login_session:
         return redirect('/login')
+    user = session.query(User).filter_by(email=login_session['email']).first()
     categoryItem = session.query(Category).filter_by(name=category).first()
-    editedItem = session.query(Item).filter_by(name=item, category_id=categoryItem.id).first()  # noqa
+    editedItem = session.query(Item).filter_by(
+        name=item, category_id=categoryItem.id).first()
     categories = session.query(Category).all()
+    if user.id != editedItem.user_id:
+        flash('You are not authorized to edit {}.'.format(item))
+        return redirect(url_for('showCategoryItem', category=categoryItem.name,
+                                item=editedItem.name))
     if request.method == 'POST':
         if request.form['name']:
             editedItem.name = request.form['name']
         if request.form['description']:
             editedItem.description = request.form['description']
         if request.form['category']:
-            category = session.query(Category).filter_by(name=request.form['category']).first()  # noqa
+            category = session.query(Category).filter_by(
+                name=request.form['category']).first()
             editedItem.category_id = category.id
         session.add(editedItem)
         session.commit()
-        flash('Menu Item Successfully Edited')
-        return redirect(url_for('showCategoryItem', category=category.name, item=editedItem.name))  # noqa
+        flash('Item Successfully Edited')
+        return redirect(url_for('showCategoryItem',
+                                category=request.form['category'],
+                                item=editedItem.name))
     else:
-        return render_template('editCategoryItem.html', category=categoryItem.name, item=editedItem.name, categories=categories, editedItem=editedItem)  # noqa
+        return render_template('editCategoryItem.html',
+                               category=categoryItem.name,
+                               item=editedItem.name, categories=categories,
+                               editedItem=editedItem)
 
 
 # Delete a category item
@@ -257,15 +301,23 @@ def editCategoryItem(category, item):
 def deleteCategoryItem(category, item):
     if 'token' not in login_session:
         return redirect('/login')
+    user = session.query(User).filter_by(email=login_session['email']).first()
     categoryItem = session.query(Category).filter_by(name=category).first()
-    itemToDelete = session.query(Item).filter_by(name=item, category_id=categoryItem.id).first()  # noqa
+    itemToDelete = session.query(Item).filter_by(
+        name=item, category_id=categoryItem.id).first()
+    if user.id != itemToDelete.user_id:
+        flash('You are not authorized to delete {}.'.format(item))
+        return redirect(url_for('showCategoryItem', category=categoryItem.name,
+                                item=itemToDelete.name))
     if request.method == 'POST':
         session.delete(itemToDelete)
         session.commit()
-        flash('Menu Item Successfully Deleted')
+        flash('Item Successfully Deleted')
         return redirect(url_for('showCatalog'))
     else:
-        return render_template('deleteCategoryItem.html', category=categoryItem.name, item=itemToDelete.name)  # noqa
+        return render_template('deleteCategoryItem.html',
+                               category=categoryItem.name,
+                               item=itemToDelete.name)
 
 
 if __name__ == '__main__':

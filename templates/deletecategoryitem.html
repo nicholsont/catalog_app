@@ -11,7 +11,7 @@
         <form action="{{ url_for('deleteCategoryItem', category=category, item=item) }}" method = 'POST'>
             <button type="submit" class="btn btn-danger">
                 <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>Delete</button>
-            <a href="{{ url_for('showCategoryItem', category=category, item=item.name) }}" class="btn btn-secondary">
+            <a href="{{ url_for('showCategoryItem', category=category, item=item) }}" class="btn btn-secondary">
                 <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>Cancel</a>
         </form>
     </div>
