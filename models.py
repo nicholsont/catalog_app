@@ -4,7 +4,6 @@ from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from itsdangerous import BadSignature, SignatureExpired
-from passlib.apps import custom_app_context as pwd_context
 import random
 import string
 
@@ -14,7 +13,7 @@ secret_key = ''.join(random.choice(string.ascii_uppercase + string.digits) for x
 
 
 class User(Base):
-    __tablename__ = 'user'
+    __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     username = Column(String(32), nullable=False)
     email = Column(String, index=True)
@@ -50,7 +49,7 @@ class User(Base):
 
 
 class Category(Base):
-    __tablename__ = 'category'
+    __tablename__ = 'categories'
     id = Column(Integer, primary_key=True)
     name = Column(String)
 
@@ -64,14 +63,13 @@ class Category(Base):
 
 
 class Item(Base):
-    __tablename__ = 'item'
+    __tablename__ = 'items'
     id = Column(Integer, primary_key=True)
     name = Column(String)
     description = Column(String)
-    picture = Column(String)
-    category_id = Column(Integer, ForeignKey('category.id'))
+    category_id = Column(Integer, ForeignKey('categories.id'))
     category = relationship(Category)
-    user_id = Column(Integer, ForeignKey('user.id'))
+    user_id = Column(Integer, ForeignKey('users.id'))
     user = relationship(User)
 
     @property
@@ -84,7 +82,7 @@ class Item(Base):
         }
 
 
-engine = create_engine('sqlite:///catalog.db')
+engine = create_engine('postgresql://postgres:1qaz!QAZ@localhost/catalog')
 
 
 Base.metadata.create_all(engine)

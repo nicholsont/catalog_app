@@ -9,19 +9,24 @@ from oauth2client.client import FlowExchangeError
 import httplib2
 import json
 import requests
+import os
+
 
 app = Flask(__name__)
+app.secret_key = '20kuN!'
 
 # Retrieves client ID's and secrets from the json files
-CLIENT_ID = json.loads(open('client_secrets.json', 'r')
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+
+CLIENT_ID = json.loads(open(BASE_DIR + '/client_secrets.json', 'r')
                        .read())['web']['client_id']
-APP_ID = json.loads(open('fb_client_secrets.json', 'r')
+APP_ID = json.loads(open(BASE_DIR + '/fb_client_secrets.json', 'r')
                     .read())['web']['app_id']
-APP_SECRET = json.loads(open('fb_client_secrets.json', 'r')
+APP_SECRET = json.loads(open(BASE_DIR + '/fb_client_secrets.json', 'r')
                         .read())['web']['app_secret']
 
 # Connect to Database and create database session
-engine = create_engine('sqlite:///catalog.db')
+engine = create_engine('postgresql://postgres:1qaz!QAZ@localhost/catalog')
 Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
@@ -46,7 +51,7 @@ def oauthLogin(provider):
         code = request.data
         try:
             # Upgrade auth code into credentials object
-            oauth_flow = flow_from_clientsecrets('client_secrets.json',
+            oauth_flow = flow_from_clientsecrets(BASE_DIR + '/client_secrets.json',
                                                  scope='')
             oauth_flow.redirect_uri = 'postmessage'
             credentials = oauth_flow.step2_exchange(code)
@@ -290,7 +295,7 @@ def editCategoryItem(category, item):
                                 category=request.form['category'],
                                 item=editedItem.name))
     else:
-        return render_template('editCategoryItem.html',
+        return render_template('editcategoryitem.html',
                                category=categoryItem.name,
                                item=editedItem.name, categories=categories,
                                editedItem=editedItem)
@@ -315,12 +320,11 @@ def deleteCategoryItem(category, item):
         flash('Item Successfully Deleted')
         return redirect(url_for('showCatalog'))
     else:
-        return render_template('deleteCategoryItem.html',
+        return render_template('deletecategoryitem.html',
                                category=categoryItem.name,
                                item=itemToDelete.name)
 
 
 if __name__ == '__main__':
-    app.secret_key = 'N10kuN!'
     app.debug = True
-    app.run(host='0.0.0.0', port=5000)
+    app.run()
