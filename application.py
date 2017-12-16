@@ -290,7 +290,7 @@ def editCategoryItem(category, item):
                                 category=request.form['category'],
                                 item=editedItem.name))
     else:
-        return render_template('editCategoryItem.html',
+        return render_template('editcategoryitem.html',
                                category=categoryItem.name,
                                item=editedItem.name, categories=categories,
                                editedItem=editedItem)
@@ -315,7 +315,7 @@ def deleteCategoryItem(category, item):
         flash('Item Successfully Deleted')
         return redirect(url_for('showCatalog'))
     else:
-        return render_template('deleteCategoryItem.html',
+        return render_template('deletecategoryitem.html',
                                category=categoryItem.name,
                                item=itemToDelete.name)
 
